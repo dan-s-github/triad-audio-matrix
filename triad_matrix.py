@@ -1,26 +1,22 @@
 import socket
 import logging
 
-from .matrix_commands import (
-    setOutputToInput,
-    setOutputVolume
-)
+from .matrix_commands import setOutputToInput, setOutputVolume
 
 _LOGGER = logging.getLogger(__name__)
 
 def send_tcp_command(command, host, port):
-    
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host, port))
     sock.settimeout(300)
     sock.setblocking(1)
 
     try:
-        #_LOGGER.warn("Sending " + command.hex())
+        # _LOGGER.warn("Sending " + command.hex())
         sock.sendall(command)
         data = sock.recv(1024)
         received = str(data)
-        #_LOGGER.warn("Received: " + str(received))
+        # _LOGGER.warn("Received: " + str(received))
 
     except socket.timeout:
         received = "Timeout occurred during data reception"
@@ -31,12 +27,11 @@ def send_tcp_command(command, host, port):
     finally:
         sock.close()
 
-
     return received
 
 
 class TriadMatrixOutputChannel(object):
-# Represents an output channel of an Triad Audio Matrix
+    # Represents an output channel of an Triad Audio Matrix
 
     def __init__(self, host, port, channel):
         self._host = host
@@ -62,17 +57,17 @@ class TriadMatrixOutputChannel(object):
         return self._source
 
     @source.setter
-    def source(self,value):
+    def source(self, value):
         self._source = value
         data = setOutputToInput[:]
-        data.append(self._channel-1)
-        
+        data.append(self._channel - 1)
+
         if self._source == 0:
             # this disconnects the output
             # send an 8 for an 8 channel matrix
-            data.append(16)
+            data.append(24)
         else:
-            data.append(self._source-1)
+            data.append(self._source - 1)
 
         send_tcp_command(data, self._host, self._port)
         return 1
@@ -86,10 +81,10 @@ class TriadMatrixOutputChannel(object):
         return self._volume
 
     @volume.setter
-    def volume(self,value):
+    def volume(self, value):
         self._volume = value
         data = setOutputVolume[:]
-        data.append(self._channel-1)
+        data.append(self._channel - 1)
 
         new_volume = int(float(self._volume) * 160)
         data.append(new_volume)
